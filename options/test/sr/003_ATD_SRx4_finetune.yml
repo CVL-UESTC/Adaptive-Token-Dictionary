@@ -1,0 +1,91 @@
+name: 003_ATD_SRx4_finetune
+model_type: ATDModel
+scale: 4
+num_gpu: 1  # set num_gpu: 0 for cpu mode
+manual_seed: 0
+
+datasets:
+  test_1: 
+    name: Set5
+    type: PairedImageDataset
+    dataroot_gt: datasets/TestDataSR/HR/Set5/x4
+    dataroot_lq: datasets/TestDataSR/LR/LRBI/Set5/x4
+    io_backend:
+      type: disk
+
+  test_2: 
+    name: Set14
+    type: PairedImageDataset
+    dataroot_gt: datasets/TestDataSR/HR/Set14/x4
+    dataroot_lq: datasets/TestDataSR/LR/LRBI/Set14/x4
+    io_backend:
+      type: disk
+
+  test_3:
+    name: BSD100
+    type: PairedImageDataset
+    dataroot_gt: datasets/TestDataSR/HR/B100/x4
+    dataroot_lq: datasets/TestDataSR/LR/LRBI/B100/x4
+    io_backend:
+      type: disk
+
+  
+  test_4:
+    name: Urban100
+    type: PairedImageDataset
+    dataroot_gt: datasets/TestDataSR/HR/Urban100/x4
+    dataroot_lq: datasets/TestDataSR/LR/LRBI/Urban100/x4
+    io_backend:
+      type: disk
+
+  
+  test_5:
+    name: Manga109
+    type: PairedImageDataset
+    dataroot_gt: datasets/TestDataSR/HR/Manga109/x4
+    dataroot_lq: datasets/TestDataSR/LR/LRBI/Manga109/x4
+    io_backend:
+      type: disk
+
+
+# network structures
+network_g:
+  type: ATD
+  upscale: 4
+  in_chans: 3
+  img_size: 96
+  embed_dim: 216
+  depths: [6, 6, 6, 6, 6, 6]
+  num_heads: [4, 4, 4, 4, 4, 4]
+  window_size: 16
+  dim_ffn_td: 16
+  category_size: 256
+  num_tokens: 512
+  reducted_dim: 16
+  convffn_kernel_size: 5
+  img_range: 1.
+  mlp_ratio: 2
+  upsampler: 'pixelshuffle'
+  resi_connection: '1conv'
+  use_checkpoint: false
+  
+# path
+path:
+  pretrain_network_g: experiments/pretrained_models/003_ATD_SRx4_finetune.pth
+  strict_load_g: yes
+  param_key_g: params_ema
+
+# validation settings
+val:
+  save_img: true
+  suffix: ~  # add suffix to saved images, if None, use exp name
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: yes
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: yes

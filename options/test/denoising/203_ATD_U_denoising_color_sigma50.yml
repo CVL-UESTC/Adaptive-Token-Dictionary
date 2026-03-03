@@ -1,0 +1,82 @@
+name: 203_ATD_U_denoising_color_sigma50
+model_type: ATDUNetModel
+scale: 1
+num_gpu: 1  # set num_gpu: 0 for cpu mode
+manual_seed: 0
+
+datasets:
+  test_1: 
+    name: CBSD68
+    type: Dataset_GaussianDenoising
+    sigma_test: 50
+    in_ch: 3  ## RGB image
+    dataroot_gt: datasets/ColorDN/CBSD68HQ
+    dataroot_lq: none
+    io_backend:
+      type: disk
+
+  test_2: 
+    name: Kodak24
+    type: Dataset_GaussianDenoising
+    sigma_test: 50
+    in_ch: 3  ## RGB image
+    dataroot_gt: datasets/ColorDN/Kodak24HQ
+    dataroot_lq: none
+    io_backend:
+      type: disk
+
+  test_3:
+    name: McMaster
+    type: Dataset_GaussianDenoising
+    sigma_test: 50
+    in_ch: 3  ## RGB image
+    dataroot_gt: datasets/ColorDN/McMasterHQ
+    dataroot_lq: none
+    io_backend:
+      type: disk
+
+  test_4:
+    name: Urban100
+    type: Dataset_GaussianDenoising
+    sigma_test: 50
+    in_ch: 3  ## RGB image
+    dataroot_gt: datasets/ColorDN/Urban100HQ
+    dataroot_lq: none
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: ATDUNet
+  upscale: 1
+  in_chans: 3
+  embed_dim: 48
+  depths: [6, 8, 8, 6]
+  num_heads: [1, 2, 4, 8]
+  window_size: [16, 8, 8, 8]
+  dim_ffn_td: [6, 12, 12, 12]
+  category_size: [128, 128, 128, 128]
+  num_tokens: [128, 128, 128, 128]
+  reducted_dim: [6, 12, 24, 24]
+  convffn_kernel_size: 5
+  bias: false
+  img_range: 1.
+  mlp_ratio: 2.66
+  use_checkpoint: true
+
+# path
+path:
+  pretrain_network_g: experiments/pretrained_models/203_ATD_U_denoising_color_sigma50.pth
+  strict_load_g: yes
+  param_key_g: ~
+
+# validation settings
+val:
+  save_img: true
+  suffix: ~  # add suffix to saved images, if None, use exp name
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false

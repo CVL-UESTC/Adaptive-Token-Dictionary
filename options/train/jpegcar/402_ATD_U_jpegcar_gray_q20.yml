@@ -1,0 +1,164 @@
+
+# general settings
+name: 402_ATD_U_jpegcar_gray_q20
+model_type: ATDUNetModel
+scale: 1
+num_gpu: 4
+manual_seed: 0
+# find_unused_parameters: True
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: DFWB
+    type: Dataset_JPEGCAR
+    quality_factor: 20
+    in_ch: 1    ## RGB image
+    dataroot_gt: datasets/DFWB
+    dataroot_lq: none
+    geometric_augs: true
+
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+
+    # data loader
+    num_worker_per_gpu: 4
+    batch_size_per_gpu: 6
+    dataset_enlarge_ratio: 1
+    # prefetch_mode: cuda
+    # pin_memory: True
+    persistent_workers: True
+
+    ## -------------Progressive training--------------------------
+    mini_batch_sizes: [6,3]             # Batch size per gpu   
+    iters: [60000,40000]
+    gt_size: 384   # Max patch size for progressive training
+    gt_sizes: [256,384]  # Patch sizes for progressive training.
+    ## ------------------------------------------------------------
+
+    # ### ------- Training on single fixed-patch size 128x128---------
+    # # mini_batch_sizes: [8]   
+    # iters: [300000]
+    # gt_size: 256   
+    # gt_sizes: [256]
+    # ### ------------------------------------------------------------
+
+    dataset_enlarge_ratio: 100
+
+  val_1:
+    name: Classic5
+    type: Dataset_JPEGCAR
+    quality_factor: 20
+    in_ch: 1
+    dataroot_gt: datasets/CAR/classic5/Classic5_HQ
+    dataroot_lq: none
+    io_backend:
+      type: disk
+
+  val_2:
+    name: Live1
+    type: Dataset_JPEGCAR
+    quality_factor: 20
+    in_ch: 1
+    dataroot_gt: datasets/CAR/LIVE1/LIVE1_HQ
+    dataroot_lq: none
+    io_backend:
+      type: disk
+
+  # val_3:
+  #   name: Urban100
+  #   type: Dataset_JPEGCAR
+  #   quality_factor: 20
+  #   in_ch: 1
+  #   dataroot_gt: datasets/ColorDN/Urban100HQ
+  #   dataroot_lq: none
+  #   io_backend:
+  #     type: disk
+
+# network structures
+network_g:
+  type: ATDUNet
+  upscale: 1
+  in_chans: 1
+  embed_dim: 48
+  depths: [6, 8, 8, 6]
+  num_heads: [1, 2, 4, 8]
+  window_size: [16, 8, 8, 8]
+  dim_ffn_td: [6, 12, 12, 12]
+  category_size: [128, 128, 128, 128]
+  num_tokens: [128, 128, 128, 128]
+  reducted_dim: [6, 12, 24, 24]
+  convffn_kernel_size: 5
+  bias: false
+  img_range: 1.
+  mlp_ratio: 2.66
+  use_checkpoint: true
+
+# path
+path:
+  pretrain_network_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  use_fp16: true
+  ema_decay: 0.999
+  total_iter: 100000
+  warmup_iter: -1 # no warm up
+  use_grad_clip: true
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [50000, 70000, 90000]
+    gamma: 0.5
+  
+  mixing_augs:
+    mixup: true
+    mixup_beta: 1.2
+    use_identity: true
+
+  optim_g:
+    type: MUON
+    lr: [!!float 8e-4, !!float 2e-4]
+    # weight_decay: !!float 1e-4
+    # betas: [0.9, 0.999]
+  
+  # losses
+  pixel_opt:
+    type: CharbonnierLoss
+    loss_weight: 1
+    reduction: mean
+    eps: !!float 1e-3
+
+# validation settings
+val:
+  val_freq: 5000
+  save_img: false
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: true
+
+    ssim: # metric name, can be arbitrary
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 5e3
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500

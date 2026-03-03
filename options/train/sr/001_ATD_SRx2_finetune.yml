@@ -1,0 +1,152 @@
+
+# general settings
+name: 001_ATD_SRx2_finetune
+model_type: ATDModel
+scale: 2
+num_gpu: 4
+manual_seed: 0
+# find_unused_parameters: True
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: DF2K
+    type: PairedImageDataset
+    dataroot_gt: datasets/DF2K/DF2K_train_HR_sub
+    dataroot_lq: datasets/DF2K/DF2K_train_LR_bicubic/X2_sub
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+
+    gt_size: 192
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 12
+    dataset_enlarge_ratio: 1
+    prefetch_mode: cuda
+    pin_memory: True
+    persistent_workers: True
+
+  val_1:
+    name: Set5
+    type: PairedImageDataset
+    dataroot_gt: datasets/TestDataSR/HR/Set5/x2
+    dataroot_lq: datasets/TestDataSR/LR/LRBI/Set5/x2
+    io_backend:
+      type: disk
+
+  val_2:
+    name: Set14
+    type: PairedImageDataset
+    dataroot_gt: datasets/TestDataSR/HR/Set14/x2
+    dataroot_lq: datasets/TestDataSR/LR/LRBI/Set14/x2
+    io_backend:
+      type: disk
+
+  val_3:
+    name: BSD100
+    type: PairedImageDataset
+    dataroot_gt: datasets/TestDataSR/HR/B100/x2
+    dataroot_lq: datasets/TestDataSR/LR/LRBI/B100/x2
+    io_backend:
+      type: disk
+  
+  val_4:
+    name: Urban100
+    type: PairedImageDataset
+    dataroot_gt: datasets/TestDataSR/HR/Urban100/x2
+    dataroot_lq: datasets/TestDataSR/LR/LRBI/Urban100/x2
+    io_backend:
+      type: disk
+
+  val_5:
+    name: Manga109
+    type: PairedImageDataset
+    dataroot_gt: datasets/TestDataSR/HR/Manga109/x2
+    dataroot_lq: datasets/TestDataSR/LR/LRBI/Manga109/x2
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: ATD
+  upscale: 2
+  in_chans: 3
+  img_size: 96
+  embed_dim: 216
+  depths: [6, 6, 6, 6, 6, 6]
+  num_heads: [4, 4, 4, 4, 4, 4]
+  window_size: 16
+  dim_ffn_td: 16
+  category_size: 256
+  num_tokens: 512
+  reducted_dim: 16
+  convffn_kernel_size: 5
+  img_range: 1.
+  mlp_ratio: 2
+  upsampler: 'pixelshuffle'
+  resi_connection: '1conv'
+  use_checkpoint: true
+
+# path
+path:
+  pretrain_network_g: experiments/000_ATD_SRx2_scratch/models/net_g_latest.pth
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  use_fp16: true
+  ema_decay: 0.999
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.9]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [80000, 100000]
+    gamma: 0.5
+
+  total_iter: 120000
+  warmup_iter: 5000
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+
+# validation settings
+val:
+  val_freq: !!float 1e4
+  save_img: false
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 2
+      test_y_channel: yes
+    
+    ssim: # metric name, can be arbitrary
+      type: calculate_ssim
+      crop_border: 2
+      test_y_channel: yes
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e4
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
