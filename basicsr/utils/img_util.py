@@ -170,3 +170,21 @@ def crop_border(imgs, crop_border):
             return [v[crop_border:-crop_border, crop_border:-crop_border, ...] for v in imgs]
         else:
             return imgs[crop_border:-crop_border, crop_border:-crop_border, ...]
+
+def padding(img_lq, img_gt, gt_size):
+    h, w, _ = img_lq.shape
+
+    h_pad = max(0, gt_size - h)
+    w_pad = max(0, gt_size - w)
+    
+    if h_pad == 0 and w_pad == 0:
+        return img_lq, img_gt
+
+    img_lq = cv2.copyMakeBorder(img_lq, 0, h_pad, 0, w_pad, cv2.BORDER_REFLECT)
+    img_gt = cv2.copyMakeBorder(img_gt, 0, h_pad, 0, w_pad, cv2.BORDER_REFLECT)
+    # print('img_lq', img_lq.shape, img_gt.shape)
+    if img_lq.ndim == 2:
+        img_lq = np.expand_dims(img_lq, axis=2)
+    if img_gt.ndim == 2:
+        img_gt = np.expand_dims(img_gt, axis=2)
+    return img_lq, img_gt

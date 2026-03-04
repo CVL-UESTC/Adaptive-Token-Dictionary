@@ -4,7 +4,7 @@
 name: 102_ATD_light_SRx3_finetune
 model_type: ATDModel
 scale: 3
-num_gpu: 4
+num_gpu: 2
 manual_seed: 0
 # find_unused_parameters: True
 
@@ -25,7 +25,7 @@ datasets:
 
     # data loader
     num_worker_per_gpu: 6
-    batch_size_per_gpu: 16
+    batch_size_per_gpu: 32
     dataset_enlarge_ratio: 1
     prefetch_mode: cuda
     pin_memory: True

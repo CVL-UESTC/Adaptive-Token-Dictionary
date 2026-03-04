@@ -9,6 +9,7 @@ from basicsr.metrics import calculate_metric
 from basicsr.utils import get_root_logger, imwrite, tensor2img
 from basicsr.utils.registry import MODEL_REGISTRY
 from .base_model import BaseModel
+import pyiqa
 
 
 @MODEL_REGISTRY.register()
@@ -32,6 +33,10 @@ class SRModel(BaseModel):
 
         if self.is_train:
             self.init_training_settings()
+        
+        if self.opt['rank'] == 0:
+            self.metric = {}
+            self.metric['lpips'] = pyiqa.create_metric("lpips-vgg", device=self.device)
 
         # self.net_g = torch.compile(self.net_g) # torch2.0
 
@@ -180,11 +185,11 @@ class SRModel(BaseModel):
 
         self.output = output.mean(dim=0, keepdim=True)
 
-    def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def dist_validation(self, dataloader, current_iter, tb_logger, save_img, rgb2bgr, use_image):
         if self.opt['rank'] == 0:
-            self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
+            self.nondist_validation(dataloader, current_iter, tb_logger, save_img, rgb2bgr, use_image)
 
-    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img):
+    def nondist_validation(self, dataloader, current_iter, tb_logger, save_img, rgb2bgr, use_image):
         dataset_name = dataloader.dataset.opt['name']
         with_metrics = self.opt['val'].get('metrics') is not None
         use_pbar = self.opt['val'].get('pbar', False)
@@ -213,12 +218,8 @@ class SRModel(BaseModel):
             if 'gt' in visuals:
                 gt_img = tensor2img([visuals['gt']])
                 metric_data['img2'] = gt_img
-                del self.gt
 
             # tentative for out of GPU memory
-            del self.lq
-            del self.output
-            torch.cuda.empty_cache()
 
             if save_img:
                 if self.opt['is_train']:
@@ -236,7 +237,16 @@ class SRModel(BaseModel):
             if with_metrics:
                 # calculate metrics
                 for name, opt_ in self.opt['val']['metrics'].items():
-                    self.metric_results[name] += calculate_metric(metric_data, opt_)
+                    if "psnr" in name or "ssim" in name:
+                        self.metric_results[name] += calculate_metric(metric_data, opt_)
+                    else:
+                        self.metric_results[name] += self.metric[name](self.output.clamp(0, 1), self.gt).item()
+                        
+            if 'gt' in visuals:
+                del self.gt
+            del self.lq
+            del self.output
+            torch.cuda.empty_cache()
             if use_pbar:
                 pbar.update(1)
                 pbar.set_description(f'Test {img_name}')

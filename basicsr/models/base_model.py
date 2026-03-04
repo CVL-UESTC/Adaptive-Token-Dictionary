@@ -8,7 +8,7 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 from basicsr.models import lr_scheduler as lr_scheduler
 from basicsr.utils import get_root_logger
 from basicsr.utils.dist_util import master_only
-
+from muon import MuonWithAuxAdam
 
 class BaseModel():
     """Base model."""
@@ -34,7 +34,7 @@ class BaseModel():
         """Save networks and training state."""
         pass
 
-    def validation(self, dataloader, current_iter, tb_logger, save_img=False):
+    def validation(self, dataloader, current_iter, tb_logger, save_img=False, rgb2bgr=True, use_image=True):
         """Validation function.
 
         Args:
@@ -42,11 +42,14 @@ class BaseModel():
             current_iter (int): Current iteration.
             tb_logger (tensorboard logger): Tensorboard logger.
             save_img (bool): Whether to save images. Default: False.
+            rgb2bgr (bool): Whether to save images using rgb2bgr. Default: True
+            use_image (bool): Whether to use saved images to compute metrics (PSNR, SSIM), if not, then use data directly from network' output. Default: True
         """
         if self.opt['dist']:
-            self.dist_validation(dataloader, current_iter, tb_logger, save_img)
+            return self.dist_validation(dataloader, current_iter, tb_logger, save_img, rgb2bgr, use_image)
         else:
-            self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
+            return self.nondist_validation(dataloader, current_iter, tb_logger,
+                                    save_img, rgb2bgr, use_image)
 
     def _initialize_best_metric_results(self, dataset_name):
         """Initialize the best metric results dict for recording the best metric value and iteration."""
@@ -130,6 +133,9 @@ class BaseModel():
         elif scheduler_type == 'CosineAnnealingRestartLR':
             for optimizer in self.optimizers:
                 self.schedulers.append(lr_scheduler.CosineAnnealingRestartLR(optimizer, **train_opt['scheduler']))
+        elif scheduler_type == 'CosineAnnealingRestartCyclicLR':
+            for optimizer in self.optimizers:
+                self.schedulers.append(lr_scheduler.CosineAnnealingRestartCyclicLR(optimizer, **train_opt['scheduler']))
         elif scheduler_type == 'TrueCosineAnnealingLR':
             for optimizer in self.optimizers:
                 self.schedulers.append(torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, **train_opt['scheduler']))
