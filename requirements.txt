@@ -1,16 +1,19 @@
 addict
-fairscale
 future
+joblib
 lmdb
+natsort
 numpy==1.26.4
 opencv-python
 Pillow
 pyyaml
+pyiqa
 requests
 scikit-image
 scipy
-tb-nightly
-torch==2.0.1
+# tb-nightly
+torch==2.7.0
 torchvision
 tqdm
+wandb
 yapf

@@ -8,6 +8,7 @@ import time
 from os import path as osp
 import sys
 import torch
+torch.set_num_threads(8)
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -19,6 +20,7 @@ from basicsr.utils import (AvgTimer, MessageLogger, check_resume, get_env_info, 
                            init_tb_logger, init_wandb_logger, make_exp_dirs, mkdir_and_rename, scandir)
 from basicsr.utils.options import copy_opt_file, dict2str, parse_options
 
+# torch.set_num_interop_threads(2)
 
 def init_tb_loggers(opt):
     # initialize wandb logger before tensorboard logger to allow proper sync
@@ -98,7 +100,6 @@ def train_pipeline(root_path):
     # parse options, set distributed setting, set random seed
     opt, args = parse_options(root_path, is_train=True)
     opt['root_path'] = root_path
-
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
 
