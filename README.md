@@ -1,6 +1,6 @@
 # Adaptive Token Dictionary
 
-This repository is an official implementation of the papers ["Transcending the Limit of Local Window: Advanced Super-Resolution Transformer with Adaptive Token Dictionary"](https://openaccess.thecvf.com/content/CVPR2024/html/Zhang_Transcending_the_Limit_of_Local_Window_Advanced_Super-Resolution_Transformer_with_CVPR_2024_paper.html) (CVPR 2024), and ["ATD: Improved Transformer with Adaptive Token Dictionary for Image Restoration"](#) (extended version accepted by TPAMI)
+This repository is an official implementation of the papers ["Transcending the Limit of Local Window: Advanced Super-Resolution Transformer with Adaptive Token Dictionary"](https://openaccess.thecvf.com/content/CVPR2024/html/Zhang_Transcending_the_Limit_of_Local_Window_Advanced_Super-Resolution_Transformer_with_CVPR_2024_paper.html) (CVPR 2024), and ["ATD: Improved Transformer with Adaptive Token Dictionary for Image Restoration"](https://www.computer.org/csdl/journal/tp/5555/01/11419871/2eyKyLHhok0) (extended version accepted by TPAMI)
 
 [![arXiv](https://img.shields.io/badge/arXiv-2401.08209-b31b1b.svg)](https://arxiv.org/abs/2401.08209)
 [![arXiv](https://img.shields.io/badge/arXiv-2603.02581-b31b1b.svg)](https://arxiv.org/abs/2603.02581)
@@ -303,6 +303,14 @@ Complete visual results can be downloaded from [link](https://drive.google.com/d
     month     = {June},
     year      = {2024},
     pages     = {2856-2865}
+}
+
+@article{zhang2026atd,
+    title={ATD: Improved Transformer With Adaptive Token Dictionary for Image Restoration},
+    author={Zhang, Leheng and Long, Wei and Li, Yawei and Zhou, Xingyu and Zhao, Xiaorui and Gu, Shuhang},
+    journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+    year={2026},
+    publisher={IEEE}
 }
 ```
 
